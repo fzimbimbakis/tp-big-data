@@ -1,5 +1,5 @@
 {
-	"name": "PreProcesamiento",
+	"name": "Procesamiento",
 	"properties": {
 		"description": "Se eliminan columnas innecesarias",
 		"type": "MappingDataFlow",
