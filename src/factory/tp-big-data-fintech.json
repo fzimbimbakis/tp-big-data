@@ -1,0 +1,9 @@
+{
+	"name": "tp-big-data-fintech",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "11cc2abe-0d34-4839-9fce-dda82e7770f4",
+		"tenantId": "a1f50a97-21c0-49a7-a9d4-f244ebb42da7"
+	}
+}
