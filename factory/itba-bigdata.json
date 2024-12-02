@@ -1,0 +1,9 @@
+{
+	"name": "itba-bigdata",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "6159374a-0e22-4464-b79d-f3aab11c8c35",
+		"tenantId": "09b8d340-5a21-42cd-a2b8-2717574397cd"
+	}
+}
