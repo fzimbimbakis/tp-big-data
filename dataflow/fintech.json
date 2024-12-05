@@ -27,22 +27,52 @@
 				}
 			],
 			"sinks": [],
-			"transformations": [],
+			"transformations": [
+				{
+					"name": "select1"
+				},
+				{
+					"name": "filter1"
+				},
+				{
+					"name": "ParseDates"
+				},
+				{
+					"name": "filter2"
+				},
+				{
+					"name": "ParseDates2"
+				},
+				{
+					"name": "select2"
+				},
+				{
+					"name": "select3"
+				},
+				{
+					"name": "join1"
+				},
+				{
+					"name": "filter3"
+				}
+			],
 			"scriptLines": [
 				"source(output(",
-				"          Prop_0 as integer,",
+				"          Prop_0 as string,",
 				"          user_id as string,",
 				"          name as string,",
 				"          email as string,",
 				"          address as string,",
-				"          birth_dt as timestamp,",
-				"          phone as integer,",
-				"          type as double,",
-				"          rubro as double",
+				"          birth_dt as string,",
+				"          phone as string,",
+				"          type as string,",
+				"          rubro as string",
 				"     ),",
-				"     allowSchemaDrift: false,",
+				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     ignoreNoFilesFound: false) ~> users",
+				"     limit: 100,",
+				"     ignoreNoFilesFound: false,",
+				"     multiLineRow: true) ~> users",
 				"source(output(",
 				"          Prop_0 as string,",
 				"          {Unnamed: 0} as string,",
@@ -58,8 +88,9 @@
 				"          return as string,",
 				"          return_dt as string",
 				"     ),",
-				"     allowSchemaDrift: true,",
+				"     allowSchemaDrift: false,",
 				"     validateSchema: false,",
+				"     limit: 100,",
 				"     ignoreNoFilesFound: false) ~> onboarding",
 				"source(output(",
 				"          Prop_0 as string,",
@@ -70,7 +101,53 @@
 				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     ignoreNoFilesFound: false) ~> transactions"
+				"     limit: 100,",
+				"     ignoreNoFilesFound: false) ~> transactions",
+				"users select(mapColumn(",
+				"          user_id,",
+				"          rubro",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"select1 filter(startsWith(user_id,\"MLB\")) ~> filter1",
+				"select2 derive(first_login_dt = toDate(first_login_dt,'yyyy-MM-dd'),",
+				"          onboarding_ending = addDays(toDate(first_login_dt,'yyyy-MM-dd'),30),",
+				"          habito_dt = toDate(first_login_dt,'yyyy-MM-dd'),",
+				"          activacion_dt = toDate(first_login_dt,'yyyy-MM-dd'),",
+				"          setup_dt = toDate(first_login_dt,'yyyy-MM-dd'),",
+				"          return_dt = toDate(first_login_dt,'yyyy-MM-dd')) ~> ParseDates",
+				"ParseDates filter(between(habito_dt, first_login_dt, onboarding_ending)&&",
+				"between(activacion_dt, first_login_dt, onboarding_ending)&&",
+				"between(setup_dt, first_login_dt, onboarding_ending)&&",
+				"between(return_dt, first_login_dt, onboarding_ending)) ~> filter2",
+				"select3 derive(transaction_dt = toDate(transaction_dt,'yyyy-MM-dd')) ~> ParseDates2",
+				"onboarding select(mapColumn(",
+				"          first_login_dt,",
+				"          user_id,",
+				"          habito,",
+				"          habito_dt,",
+				"          activacion,",
+				"          activacion_dt,",
+				"          setup,",
+				"          setup_dt,",
+				"          return,",
+				"          return_dt",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select2",
+				"transactions select(mapColumn(",
+				"          user_id,",
+				"          transaction_dt,",
+				"          segment",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select3",
+				"ParseDates2, filter2 join(select3@user_id == select2@user_id,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join1",
+				"join1 filter(between(transaction_dt, first_login_dt, onboarding_ending)) ~> filter3"
 			]
 		}
 	}
