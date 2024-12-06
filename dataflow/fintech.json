@@ -26,7 +26,11 @@
 					"name": "transactions"
 				}
 			],
-			"sinks": [],
+			"sinks": [
+				{
+					"name": "sink1"
+				}
+			],
 			"transformations": [
 				{
 					"name": "select1"
@@ -147,7 +151,11 @@
 				"     matchType:'exact',",
 				"     ignoreSpaces: false,",
 				"     broadcast: 'auto')~> join1",
-				"join1 filter(between(transaction_dt, first_login_dt, onboarding_ending)) ~> filter3"
+				"join1 filter(between(transaction_dt, first_login_dt, onboarding_ending)) ~> filter3",
+				"filter3 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> sink1"
 			]
 		}
 	}
