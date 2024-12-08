@@ -6,15 +6,48 @@
 			"sources": [
 				{
 					"dataset": {
+						"referenceName": "users_santi",
+						"type": "DatasetReference"
+					},
+					"name": "users"
+				},
+				{
+					"dataset": {
 						"referenceName": "onboardingSanti",
 						"type": "DatasetReference"
 					},
-					"name": "source1"
+					"name": "onboarding"
+				},
+				{
+					"dataset": {
+						"referenceName": "transactions_santi",
+						"type": "DatasetReference"
+					},
+					"name": "transactions"
 				}
 			],
 			"sinks": [],
-			"transformations": [],
+			"transformations": [
+				{
+					"name": "select1"
+				}
+			],
 			"scriptLines": [
+				"source(output(",
+				"          Prop_0 as string,",
+				"          user_id as string,",
+				"          name as string,",
+				"          email as string,",
+				"          address as string,",
+				"          birth_dt as string,",
+				"          phone as string,",
+				"          type as string,",
+				"          rubro as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     limit: 100,",
+				"     ignoreNoFilesFound: false) ~> users",
 				"source(output(",
 				"          Prop_0 as string,",
 				"          {Unnamed: 0} as string,",
@@ -32,7 +65,25 @@
 				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     ignoreNoFilesFound: false) ~> source1"
+				"     limit: 100,",
+				"     ignoreNoFilesFound: false) ~> onboarding",
+				"source(output(",
+				"          Prop_0 as string,",
+				"          user_id as string,",
+				"          transaction_dt as string,",
+				"          type as string,",
+				"          segment as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     limit: 100,",
+				"     ignoreNoFilesFound: false) ~> transactions",
+				"users select(mapColumn(",
+				"          user_id,",
+				"          rubro",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1"
 			]
 		}
 	}
