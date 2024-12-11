@@ -26,7 +26,15 @@
 					"name": "transactions"
 				}
 			],
-			"sinks": [],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "CountUsers",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
 			"transformations": [
 				{
 					"name": "UsersInfo"
@@ -57,6 +65,9 @@
 				},
 				{
 					"name": "TransactionFilter"
+				},
+				{
+					"name": "CountUsers"
 				}
 			],
 			"scriptLines": [
@@ -156,7 +167,17 @@
 				"     matchType:'exact',",
 				"     ignoreSpaces: false,",
 				"     broadcast: 'auto')~> BrazilFilter3",
-				"ParseDates2 filter(between(transaction_dt, first_login_dt, onboarding_ending) && ((segment == \"1\" && type >= \"1\" && type <= \"7\") || (segment == \"2\" && type >= \"8\" && type <= \"9\"))) ~> TransactionFilter"
+				"ParseDates2 filter(between(transaction_dt, first_login_dt, onboarding_ending) && ((segment == \"1\" && type >= \"1\" && type <= \"7\") || (segment == \"2\" && type >= \"8\" && type <= \"9\"))) ~> TransactionFilter",
+				"BrazilFilter aggregate(users = countDistinct(user_id)) ~> CountUsers",
+				"CountUsers sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          users as string,",
+				"          rubros as string",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     saveOrder: 1) ~> sink1"
 			]
 		}
 	}

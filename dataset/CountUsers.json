@@ -1,0 +1,32 @@
+{
+	"name": "CountUsers",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureBlobStorage1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "CountUsers.csv",
+				"container": "bigdatacsv"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "users",
+				"type": "String"
+			},
+			{
+				"name": "rubros",
+				"type": "String"
+			}
+		]
+	}
+}
