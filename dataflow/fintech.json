@@ -26,38 +26,37 @@
 					"name": "transactions"
 				}
 			],
-			"sinks": [
-				{
-					"name": "sink1"
-				}
-			],
+			"sinks": [],
 			"transformations": [
 				{
-					"name": "select1"
+					"name": "UsersInfo"
 				},
 				{
-					"name": "filter1"
+					"name": "BrazilFilter"
 				},
 				{
 					"name": "ParseDates"
 				},
 				{
-					"name": "filter2"
+					"name": "OnboardingDates"
 				},
 				{
 					"name": "ParseDates2"
 				},
 				{
-					"name": "select2"
+					"name": "OnboardingInfo"
 				},
 				{
-					"name": "select3"
+					"name": "TransactionsInfo"
 				},
 				{
-					"name": "join1"
+					"name": "BrazilFilter2"
 				},
 				{
-					"name": "filter3"
+					"name": "BrazilFilter3"
+				},
+				{
+					"name": "TransactionFilter"
 				}
 			],
 			"scriptLines": [
@@ -112,9 +111,9 @@
 				"          rubro",
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> select1",
-				"select1 filter(startsWith(user_id,\"MLB\")) ~> filter1",
-				"select2 derive(first_login_dt = toDate(first_login_dt,'yyyy-MM-dd'),",
+				"     skipDuplicateMapOutputs: true) ~> UsersInfo",
+				"UsersInfo filter(startsWith(user_id,\"MLB\")) ~> BrazilFilter",
+				"BrazilFilter2 derive(first_login_dt = toDate(first_login_dt,'yyyy-MM-dd'),",
 				"          onboarding_ending = addDays(toDate(first_login_dt,'yyyy-MM-dd'),30),",
 				"          habito_dt = toDate(first_login_dt,'yyyy-MM-dd'),",
 				"          activacion_dt = toDate(first_login_dt,'yyyy-MM-dd'),",
@@ -123,8 +122,8 @@
 				"ParseDates filter(between(habito_dt, first_login_dt, onboarding_ending)&&",
 				"between(activacion_dt, first_login_dt, onboarding_ending)&&",
 				"between(setup_dt, first_login_dt, onboarding_ending)&&",
-				"between(return_dt, first_login_dt, onboarding_ending)) ~> filter2",
-				"select3 derive(transaction_dt = toDate(transaction_dt,'yyyy-MM-dd')) ~> ParseDates2",
+				"between(return_dt, first_login_dt, onboarding_ending)) ~> OnboardingDates",
+				"BrazilFilter3 derive(transaction_dt = toDate(transaction_dt,'yyyy-MM-dd')) ~> ParseDates2",
 				"onboarding select(mapColumn(",
 				"          first_login_dt,",
 				"          user_id,",
@@ -138,24 +137,26 @@
 				"          return_dt",
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> select2",
+				"     skipDuplicateMapOutputs: true) ~> OnboardingInfo",
 				"transactions select(mapColumn(",
 				"          user_id,",
 				"          transaction_dt,",
+				"          type,",
 				"          segment",
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> select3",
-				"ParseDates2, filter2 join(select3@user_id == select2@user_id,",
+				"     skipDuplicateMapOutputs: true) ~> TransactionsInfo",
+				"OnboardingInfo, BrazilFilter join(OnboardingInfo@user_id == UsersInfo@user_id,",
 				"     joinType:'inner',",
 				"     matchType:'exact',",
 				"     ignoreSpaces: false,",
-				"     broadcast: 'auto')~> join1",
-				"join1 filter(between(transaction_dt, first_login_dt, onboarding_ending)) ~> filter3",
-				"filter3 sink(allowSchemaDrift: true,",
-				"     validateSchema: false,",
-				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> sink1"
+				"     broadcast: 'auto')~> BrazilFilter2",
+				"TransactionsInfo, OnboardingDates join(TransactionsInfo@user_id == UsersInfo@user_id,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> BrazilFilter3",
+				"ParseDates2 filter(between(transaction_dt, first_login_dt, onboarding_ending) && ((segment == \"1\" && type >= \"1\" && type <= \"7\") || (segment == \"2\" && type >= \"8\" && type <= \"9\"))) ~> TransactionFilter"
 			]
 		}
 	}

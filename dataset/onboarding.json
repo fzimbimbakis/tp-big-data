@@ -9,7 +9,9 @@
 		"type": "DelimitedText",
 		"typeProperties": {
 			"location": {
-				"type": "AzureBlobStorageLocation"
+				"type": "AzureBlobStorageLocation",
+				"fileName": "lk_onboarding.csv",
+				"container": "bigdatacsv"
 			},
 			"columnDelimiter": ",",
 			"escapeChar": "\\",
