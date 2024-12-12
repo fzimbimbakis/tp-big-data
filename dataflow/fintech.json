@@ -28,11 +28,11 @@
 			],
 			"sinks": [
 				{
-					"dataset": {
-						"referenceName": "CountUsers",
-						"type": "DatasetReference"
+					"linkedService": {
+						"referenceName": "AzureSqlDatabase1",
+						"type": "LinkedServiceReference"
 					},
-					"name": "sink1"
+					"name": "UserCount"
 				}
 			],
 			"transformations": [
@@ -171,13 +171,18 @@
 				"BrazilFilter aggregate(users = countDistinct(user_id)) ~> CountUsers",
 				"CountUsers sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     input(",
-				"          users as string,",
-				"          rubros as string",
-				"     ),",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'public',",
+				"     tableName: 'users',",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     deletable: false,",
+				"     upsertable: false,",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
-				"     saveOrder: 1) ~> sink1"
+				"     saveOrder: 1,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> UserCount"
 			]
 		}
 	}
