@@ -11,7 +11,7 @@
 			"location": {
 				"type": "AzureBlobStorageLocation",
 				"fileName": "bt_users_transactions.csv",
-				"container": "tp-big-data-files"
+				"container": "input"
 			},
 			"columnDelimiter": ",",
 			"escapeChar": "\\",
