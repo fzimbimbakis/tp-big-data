@@ -33,6 +33,34 @@
 						"type": "LinkedServiceReference"
 					},
 					"name": "UserCount"
+				},
+				{
+					"linkedService": {
+						"referenceName": "AzureSqlDatabase1",
+						"type": "LinkedServiceReference"
+					},
+					"name": "DropRates"
+				},
+				{
+					"linkedService": {
+						"referenceName": "AzureSqlDatabase1",
+						"type": "LinkedServiceReference"
+					},
+					"name": "ActivacionRates"
+				},
+				{
+					"linkedService": {
+						"referenceName": "AzureSqlDatabase1",
+						"type": "LinkedServiceReference"
+					},
+					"name": "HabitoRate"
+				},
+				{
+					"linkedService": {
+						"referenceName": "AzureSqlDatabase1",
+						"type": "LinkedServiceReference"
+					},
+					"name": "SetupRate"
 				}
 			],
 			"transformations": [
@@ -68,6 +96,18 @@
 				},
 				{
 					"name": "CountUsers"
+				},
+				{
+					"name": "Drop"
+				},
+				{
+					"name": "Activation"
+				},
+				{
+					"name": "Habito"
+				},
+				{
+					"name": "Setup"
 				}
 			],
 			"scriptLines": [
@@ -84,7 +124,6 @@
 				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     limit: 100,",
 				"     ignoreNoFilesFound: false,",
 				"     multiLineRow: true) ~> users",
 				"source(output(",
@@ -169,11 +208,15 @@
 				"     broadcast: 'auto')~> BrazilFilter3",
 				"ParseDates2 filter(between(transaction_dt, first_login_dt, onboarding_ending) && ((segment == \"1\" && type >= \"1\" && type <= \"7\") || (segment == \"2\" && type >= \"8\" && type <= \"9\"))) ~> TransactionFilter",
 				"BrazilFilter aggregate(users = countDistinct(user_id)) ~> CountUsers",
+				"OnboardingDates aggregate(count = countIf(return == \"0\")) ~> Drop",
+				"OnboardingDates aggregate(count = countIf(activacion == \"1\")) ~> Activation",
+				"OnboardingDates aggregate(count = countIf(habito == \"1.0\")) ~> Habito",
+				"OnboardingDates aggregate(count = countIf(setup == \"1\")) ~> Setup",
 				"CountUsers sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     format: 'table',",
 				"     store: 'sqlserver',",
-				"     schemaName: 'public',",
+				"     schemaName: 'bigdata',",
 				"     tableName: 'users',",
 				"     insertable: true,",
 				"     updateable: false,",
@@ -181,8 +224,63 @@
 				"     upsertable: false,",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
-				"     saveOrder: 1,",
-				"     errorHandlingOption: 'stopOnFirstError') ~> UserCount"
+				"     saveOrder: 0,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          count = users",
+				"     )) ~> UserCount",
+				"Drop sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'bigdata',",
+				"     tableName: 'dropRate',",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     deletable: false,",
+				"     upsertable: false,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> DropRates",
+				"Activation sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'bigdata',",
+				"     tableName: 'activacionRate',",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     deletable: false,",
+				"     upsertable: false,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> ActivacionRates",
+				"Habito sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'bigdata',",
+				"     tableName: 'habitoRate',",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     deletable: false,",
+				"     upsertable: false,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> HabitoRate",
+				"Setup sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'bigdata',",
+				"     tableName: 'setupRate',",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     deletable: false,",
+				"     upsertable: false,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> SetupRate"
 			]
 		}
 	}
