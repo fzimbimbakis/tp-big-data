@@ -29,7 +29,37 @@
 			"sinks": [],
 			"transformations": [
 				{
-					"name": "select1"
+					"name": "UserInfo"
+				},
+				{
+					"name": "BrazilFilter"
+				},
+				{
+					"name": "OnboardingInfo"
+				},
+				{
+					"name": "TransactionsInfo"
+				},
+				{
+					"name": "BrazilFilter2"
+				},
+				{
+					"name": "ParseDates"
+				},
+				{
+					"name": "OnboardingDates"
+				},
+				{
+					"name": "BrazilFilter3"
+				},
+				{
+					"name": "ParseDates2"
+				},
+				{
+					"name": "TransactionFilter"
+				},
+				{
+					"name": "aggregate1"
 				}
 			],
 			"scriptLines": [
@@ -47,7 +77,8 @@
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     limit: 100,",
-				"     ignoreNoFilesFound: false) ~> users",
+				"     ignoreNoFilesFound: false,",
+				"     multiLineRow: true) ~> users",
 				"source(output(",
 				"          Prop_0 as string,",
 				"          {Unnamed: 0} as string,",
@@ -66,7 +97,8 @@
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     limit: 100,",
-				"     ignoreNoFilesFound: false) ~> onboarding",
+				"     ignoreNoFilesFound: false,",
+				"     multiLineRow: true) ~> onboarding",
 				"source(output(",
 				"          Prop_0 as string,",
 				"          user_id as string,",
@@ -77,13 +109,64 @@
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     limit: 100,",
-				"     ignoreNoFilesFound: false) ~> transactions",
+				"     ignoreNoFilesFound: false,",
+				"     multiLineRow: true) ~> transactions",
 				"users select(mapColumn(",
 				"          user_id,",
 				"          rubro",
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> select1"
+				"     skipDuplicateMapOutputs: true) ~> UserInfo",
+				"UserInfo filter(startsWith(user_id, \"MLB\")) ~> BrazilFilter",
+				"onboarding select(mapColumn(",
+				"          first_login_dt,",
+				"          user_id,",
+				"          habito,",
+				"          habito_dt,",
+				"          activacion,",
+				"          activacion_dt,",
+				"          setup,",
+				"          setup_dt,",
+				"          return,",
+				"          return_dt",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> OnboardingInfo",
+				"transactions select(mapColumn(",
+				"          user_id,",
+				"          transaction_dt,",
+				"          type,",
+				"          segment",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> TransactionsInfo",
+				"OnboardingInfo, BrazilFilter join(OnboardingInfo@user_id == UserInfo@user_id,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> BrazilFilter2",
+				"BrazilFilter2 derive(first_login_dt = toDate(first_login_dt,'yyyy-MM-dd'),",
+				"          habito_dt = toDate(habito_dt,'yyyy-MM-dd'),",
+				"          activacion_dt = toDate(activacion_dt,'yyyy-MM-dd'),",
+				"          setup_dt = toDate(setup_dt,'yyyy-MM-dd'),",
+				"          return_dt = toDate(return_dt,'yyyy-MM-dd'),",
+				"          onboarding_ending = addDays(toDate(first_login_dt,'yyyy-MM-dd'),30)) ~> ParseDates",
+				"ParseDates filter(between(habito_dt, first_login_dt, onboarding_ending)&&\r",
+				"between(activacion_dt, first_login_dt, onboarding_ending)&&\r",
+				"between(setup_dt, first_login_dt, onboarding_ending)&&\r",
+				"between(return_dt, first_login_dt, onboarding_ending)) ~> OnboardingDates",
+				"TransactionsInfo, OnboardingDates join(TransactionsInfo@user_id == UserInfo@user_id,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> BrazilFilter3",
+				"BrazilFilter3 derive(transaction_dt = toDate(transaction_dt,'yyyy-MM-dd')) ~> ParseDates2",
+				"ParseDates2 filter(between(transaction_dt, first_login_dt, onboarding_ending) && \r",
+				"(\r",
+				"    (segment == \"1\" && type >= \"1\" && type <= \"7\") || \r",
+				"    (segment == \"2\" && type >= \"8\" && type <= \"9\")\r",
+				")) ~> TransactionFilter",
+				"BrazilFilter aggregate(users = countDistinct(user_id)) ~> aggregate1"
 			]
 		}
 	}

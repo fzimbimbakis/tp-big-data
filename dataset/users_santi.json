@@ -14,7 +14,6 @@
 				"container": "input"
 			},
 			"columnDelimiter": ",",
-			"rowDelimiter": "\r",
 			"encodingName": "UTF-8",
 			"escapeChar": "\"",
 			"firstRowAsHeader": true,
