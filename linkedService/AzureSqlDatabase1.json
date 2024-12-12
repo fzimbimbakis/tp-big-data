@@ -8,16 +8,7 @@
 			"database": "bigdata",
 			"encrypt": "mandatory",
 			"trustServerCertificate": false,
-			"authenticationType": "SQL",
-			"userName": "gonele",
-			"password": {
-				"type": "AzureKeyVaultSecret",
-				"store": {
-					"referenceName": "AzureKeyVault1",
-					"type": "LinkedServiceReference"
-				},
-				"secretName": "gonele"
-			}
+			"authenticationType": "SystemAssignedManagedIdentity"
 		}
 	},
 	"type": "Microsoft.DataFactory/factories/linkedservices"
