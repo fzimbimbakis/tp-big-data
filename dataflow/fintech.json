@@ -40,6 +40,13 @@
 						"type": "LinkedServiceReference"
 					},
 					"name": "Rates"
+				},
+				{
+					"linkedService": {
+						"referenceName": "AzureSqlDatabase1",
+						"type": "LinkedServiceReference"
+					},
+					"name": "Habito"
 				}
 			],
 			"transformations": [
@@ -78,6 +85,30 @@
 				},
 				{
 					"name": "Aggregation"
+				},
+				{
+					"name": "DeleteDuplicates2"
+				},
+				{
+					"name": "OnboardEnding"
+				},
+				{
+					"name": "DistinctTCount"
+				},
+				{
+					"name": "split1"
+				},
+				{
+					"name": "TCount"
+				},
+				{
+					"name": "union1"
+				},
+				{
+					"name": "TCount5"
+				},
+				{
+					"name": "Count"
 				},
 				{
 					"name": "DeleteDuplicates"
@@ -133,7 +164,7 @@
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> UsersInfo",
-				"UsersInfo filter(startsWith(user_id,\"MLB\")) ~> BrazilFilter",
+				"DeleteDuplicates filter(startsWith(user_id,\"MLB\")) ~> BrazilFilter",
 				"BrazilFilter2 derive(first_login_dt = toDate(first_login_dt,'yyyy-MM-dd'),",
 				"          onboarding_ending = addDays(toDate(first_login_dt,'yyyy-MM-dd'),30),",
 				"          habito_dt = toDate(first_login_dt,'yyyy-MM-dd'),",
@@ -167,12 +198,12 @@
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> TransactionsInfo",
-				"DeleteDuplicates, BrazilFilter join(DeleteDuplicates@user_id == UsersInfo@user_id,",
+				"DeleteDuplicates2, BrazilFilter join(DeleteDuplicates@user_id == DeleteDuplicates@user_id,",
 				"     joinType:'inner',",
 				"     matchType:'exact',",
 				"     ignoreSpaces: false,",
 				"     broadcast: 'auto')~> BrazilFilter2",
-				"TransactionsInfo, OnboardingDates join(TransactionsInfo@user_id == UsersInfo@user_id,",
+				"TransactionsInfo, OnboardEnding join(TransactionsInfo@user_id == OnboardEnding@user_id,",
 				"     joinType:'inner',",
 				"     matchType:'exact',",
 				"     ignoreSpaces: false,",
@@ -184,6 +215,24 @@
 				"          habito = countIf(habito == \"1.0\"),",
 				"          setup = countIf(setup == \"1\")) ~> Aggregation",
 				"OnboardingInfo aggregate(groupBy(user_id),",
+				"     each(match(name!='user_id'), $$ = first($$))) ~> DeleteDuplicates2",
+				"ParseDates select(mapColumn(",
+				"          user_id = DeleteDuplicates2@user_id,",
+				"          first_login_dt,",
+				"          onboarding_ending",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> OnboardEnding",
+				"split1@Individuals aggregate(groupBy(split1@Individuals@user_id),",
+				"     transaction_count = countDistinct(transaction_dt)) ~> DistinctTCount",
+				"TransactionFilter split(segment == \"1\",",
+				"     disjoint: false) ~> split1@(Individuals, Sellers)",
+				"split1@Sellers aggregate(groupBy(split1@Sellers@user_id),",
+				"     transaction_count = count(transaction_dt)) ~> TCount",
+				"DistinctTCount, TCount union(byName: true)~> union1",
+				"union1 filter(transaction_count >= 5) ~> TCount5",
+				"TCount5 aggregate(count = count(user_id)) ~> Count",
+				"UsersInfo aggregate(groupBy(user_id),",
 				"     each(match(name!='user_id'), $$ = first($$))) ~> DeleteDuplicates",
 				"CountUsers sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
@@ -195,6 +244,7 @@
 				"     updateable: false,",
 				"     deletable: false,",
 				"     upsertable: false,",
+				"     recreate: true,",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
 				"     saveOrder: 0,",
@@ -212,6 +262,7 @@
 				"     updateable: false,",
 				"     deletable: false,",
 				"     upsertable: false,",
+				"     recreate: true,",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
 				"     errorHandlingOption: 'stopOnFirstError',",
@@ -220,7 +271,24 @@
 				"          activacionCount = activacion,",
 				"          habitoCount = habito,",
 				"          setupCount = setup",
-				"     )) ~> Rates"
+				"     )) ~> Rates",
+				"Count sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'bigdata',",
+				"     tableName: 'habito',",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     deletable: false,",
+				"     upsertable: false,",
+				"     recreate: true,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          count",
+				"     )) ~> Habito"
 			]
 		}
 	}
