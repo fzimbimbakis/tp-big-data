@@ -11,7 +11,7 @@
 			"location": {
 				"type": "AzureBlobStorageLocation",
 				"fileName": "lk_onboarding.csv",
-				"container": "tp-big-data-files"
+				"container": "input"
 			},
 			"columnDelimiter": ",",
 			"escapeChar": "\\",
