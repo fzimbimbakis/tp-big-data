@@ -198,7 +198,7 @@
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> TransactionsInfo",
-				"DeleteDuplicates2, BrazilFilter join(DeleteDuplicates@user_id == DeleteDuplicates@user_id,",
+				"DeleteDuplicates2, BrazilFilter join(DeleteDuplicates2@user_id == DeleteDuplicates@user_id,",
 				"     joinType:'inner',",
 				"     matchType:'exact',",
 				"     ignoreSpaces: false,",
