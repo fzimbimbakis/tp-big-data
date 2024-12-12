@@ -59,7 +59,7 @@
 					"name": "TransactionFilter"
 				},
 				{
-					"name": "aggregate1"
+					"name": "CountUsers"
 				}
 			],
 			"scriptLines": [
@@ -166,7 +166,7 @@
 				"    (segment == \"1\" && type >= \"1\" && type <= \"7\") || \r",
 				"    (segment == \"2\" && type >= \"8\" && type <= \"9\")\r",
 				")) ~> TransactionFilter",
-				"BrazilFilter aggregate(users = countDistinct(user_id)) ~> aggregate1"
+				"BrazilFilter aggregate(users = countDistinct(user_id)) ~> CountUsers"
 			]
 		}
 	}
