@@ -28,23 +28,23 @@
 			],
 			"sinks": [
 				{
-					"dataset": {
-						"referenceName": "UsersClean",
-						"type": "DatasetReference"
+					"linkedService": {
+						"referenceName": "AzureSqlDatabase1",
+						"type": "LinkedServiceReference"
 					},
 					"name": "UsersClean"
 				},
 				{
-					"dataset": {
-						"referenceName": "OnboardingClean",
-						"type": "DatasetReference"
+					"linkedService": {
+						"referenceName": "AzureSqlDatabase1",
+						"type": "LinkedServiceReference"
 					},
 					"name": "OnboardingClean"
 				},
 				{
-					"dataset": {
-						"referenceName": "TransactionsClean",
-						"type": "DatasetReference"
+					"linkedService": {
+						"referenceName": "AzureSqlDatabase1",
+						"type": "LinkedServiceReference"
 					},
 					"name": "TransactionsClean"
 				}
@@ -191,29 +191,73 @@
 				"     each(match(name!='user_id'), $$ = first($$))) ~> DeleteDuplicates",
 				"BrazilFilter sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     input(",
-				"          users as string",
-				"     ),",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'bigdata',",
+				"     tableName: 'users_clean',",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     deletable: false,",
+				"     upsertable: false,",
+				"     recreate: true,",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          user_id,",
+				"          rubro",
+				"     ),",
 				"     partitionBy('hash', 1)) ~> UsersClean",
 				"ParseDates sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     input(",
-				"          users as string",
-				"     ),",
-				"     partitionFileNames:['onboarding_clean.csv'],",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'bigdata',",
+				"     tableName: 'onboarding_clean',",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     deletable: false,",
+				"     upsertable: false,",
+				"     recreate: true,",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          user_id = DeleteDuplicates2@user_id,",
+				"          first_login_dt,",
+				"          habito,",
+				"          habito_dt,",
+				"          activacion,",
+				"          activacion_dt,",
+				"          setup,",
+				"          setup_dt,",
+				"          return,",
+				"          return_dt,",
+				"          onboarding_ending",
+				"     ),",
 				"     partitionBy('hash', 1)) ~> OnboardingClean",
 				"TransactionFilter sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     input(",
-				"          users as string",
-				"     ),",
-				"     partitionFileNames:['transactions_clean.csv'],",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'bigdata',",
+				"     tableName: 'transactions_clean',",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     deletable: false,",
+				"     upsertable: false,",
+				"     recreate: true,",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          user_id = TransactionsInfo@user_id,",
+				"          transaction_dt,",
+				"          type,",
+				"          segment,",
+				"          first_login_dt,",
+				"          onboarding_ending",
+				"     ),",
 				"     partitionBy('hash', 1)) ~> TransactionsClean"
 			]
 		}
