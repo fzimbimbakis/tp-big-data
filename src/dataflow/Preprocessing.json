@@ -1,5 +1,5 @@
 {
-	"name": "dataflow1",
+	"name": "Preprocessing",
 	"properties": {
 		"type": "MappingDataFlow",
 		"typeProperties": {
@@ -11,9 +11,24 @@
 					},
 					"name": "Transactions",
 					"description": "Import data from bt_transactions"
+				},
+				{
+					"dataset": {
+						"referenceName": "OnboardingInput",
+						"type": "DatasetReference"
+					},
+					"name": "Onboarding"
 				}
 			],
-			"sinks": [],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "TransactionsClean",
+						"type": "DatasetReference"
+					},
+					"name": "TransactionsClean"
+				}
+			],
 			"transformations": [
 				{
 					"name": "RelevantCols"
@@ -41,6 +56,24 @@
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false) ~> Transactions",
+				"source(output(",
+				"          Prop_0 as string,",
+				"          {Unnamed: 0} as string,",
+				"          first_login_dt as date,",
+				"          week_year as integer,",
+				"          user_id as string,",
+				"          habito as integer,",
+				"          habito_dt as date,",
+				"          activacion as integer,",
+				"          activacion_dt as date,",
+				"          setup as integer,",
+				"          setup_dt as date,",
+				"          return as integer,",
+				"          return_dt as date",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> Onboarding",
 				"Transactions select(mapColumn(",
 				"          user_id,",
 				"          transaction_dt,",
@@ -51,7 +84,20 @@
 				"     skipDuplicateMapOutputs: true) ~> RelevantCols",
 				"RelevantCols filter(!isNull(user_id)) ~> NonNullUsers",
 				"NonNullUsers filter((segment == 1 && type >= 1 && type <= 7) || (segment == 2 && (type == 8 || type == 9))) ~> SegmentValidation",
-				"SegmentValidation derive(segment = iif(segment == 1, 'Individual', 'Seller')) ~> MapSegment"
+				"SegmentValidation derive(segment = iif(segment == 1, 'Individual', 'Seller')) ~> MapSegment",
+				"MapSegment sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          Prop_0 as string,",
+				"          user_id as string,",
+				"          transaction_dt as string,",
+				"          type as string,",
+				"          segment as string",
+				"     ),",
+				"     partitionFileNames:['bt_users_transactions_clean.csv'],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> TransactionsClean"
 			]
 		}
 	}
