@@ -213,7 +213,8 @@
 				"     ),",
 				"     partitionFileNames:['transactions_clean.csv'],",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> TransactionsClean"
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> TransactionsClean"
 			]
 		}
 	}
