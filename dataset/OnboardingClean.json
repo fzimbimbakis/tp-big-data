@@ -1,0 +1,61 @@
+{
+	"name": "OnboardingClean",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureSqlDatabase1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "user_id",
+				"type": "nvarchar"
+			},
+			{
+				"name": "first_login_dt",
+				"type": "date"
+			},
+			{
+				"name": "habito",
+				"type": "nvarchar"
+			},
+			{
+				"name": "habito_dt",
+				"type": "date"
+			},
+			{
+				"name": "activacion",
+				"type": "nvarchar"
+			},
+			{
+				"name": "activacion_dt",
+				"type": "date"
+			},
+			{
+				"name": "setup",
+				"type": "nvarchar"
+			},
+			{
+				"name": "setup_dt",
+				"type": "date"
+			},
+			{
+				"name": "return",
+				"type": "nvarchar"
+			},
+			{
+				"name": "return_dt",
+				"type": "date"
+			},
+			{
+				"name": "onboarding_ending",
+				"type": "date"
+			}
+		],
+		"typeProperties": {
+			"schema": "bigdata",
+			"table": "onboarding_clean"
+		}
+	}
+}

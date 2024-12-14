@@ -12,7 +12,11 @@
 					"name": "UsersClean"
 				},
 				{
-					"name": "sfda"
+					"dataset": {
+						"referenceName": "OnboardingClean",
+						"type": "DatasetReference"
+					},
+					"name": "OnboardingClean"
 				},
 				{
 					"name": "afsd"
@@ -92,6 +96,30 @@
 				},
 				{
 					"name": "Select"
+				},
+				{
+					"name": "CountSetup"
+				},
+				{
+					"name": "CountActivacion"
+				},
+				{
+					"name": "CountDrop"
+				},
+				{
+					"name": "AddKey1"
+				},
+				{
+					"name": "AddKey2"
+				},
+				{
+					"name": "AddKey3"
+				},
+				{
+					"name": "join1"
+				},
+				{
+					"name": "join2"
 				}
 			],
 			"scriptLines": [
@@ -106,21 +134,31 @@
 				"     isolationLevel: 'READ_UNCOMMITTED',",
 				"     format: 'table') ~> UsersClean",
 				"source(output(",
-				"          users as string",
+				"          user_id as string,",
+				"          first_login_dt as date,",
+				"          habito as string,",
+				"          habito_dt as date,",
+				"          activacion as string,",
+				"          activacion_dt as date,",
+				"          setup as string,",
+				"          setup_dt as date,",
+				"          return as string,",
+				"          return_dt as date,",
+				"          onboarding_ending as date",
 				"     ),",
-				"     allowSchemaDrift: false,",
-				"     validateSchema: false) ~> sfda",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     limit: 100,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> OnboardingClean",
 				"source(output(",
 				"          users as string",
 				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false) ~> afsd",
 				"SelectHabito filter(between(habito_dt, first_login_dt, onboarding_ending)) ~> OnboardingDates",
-				"Select aggregate(users = ERROR_FUNCTION('')) ~> CountUsers",
-				"OnboardingDates aggregate(drop = countIf(return == \"0\"),",
-				"          activacion = countIf(activacion == \"1\"),",
-				"          habito = countIf(habito == \"1.0\"),",
-				"          setup = countIf(setup == \"1\")) ~> Aggregation",
+				"Select aggregate(count = count(user_id)) ~> CountUsers",
+				"OnboardingDates aggregate(habito = countIf(habito == \"1.0\")) ~> Aggregation",
 				"split1@Individuals aggregate(groupBy(user_id = split1@Individuals@user_id),",
 				"     transaction_count = countDistinct(transaction_dt)) ~> DistinctTCount",
 				"afsd split(segment == \"1\",",
@@ -130,8 +168,8 @@
 				"DistinctTCount, TCount union(byName: true)~> union1",
 				"union1 filter(transaction_count >= 5) ~> TCount5",
 				"TCount5 aggregate(count = count(user_id)) ~> Count",
-				"sfda select(mapColumn(",
-				"          user_id = {DeleteDuplicates2@user_id},",
+				"OnboardingClean select(mapColumn(",
+				"          user_id,",
 				"          first_login_dt,",
 				"          habito,",
 				"          habito_dt,",
@@ -139,8 +177,8 @@
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> SelectHabito",
-				"sfda select(mapColumn(",
-				"          user_id = {DeleteDuplicates2@user_id},",
+				"OnboardingClean select(mapColumn(",
+				"          user_id,",
 				"          first_login_dt,",
 				"          return,",
 				"          return_dt,",
@@ -148,8 +186,8 @@
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> SelectReturn",
-				"sfda select(mapColumn(",
-				"          user_id = {DeleteDuplicates2@user_id},",
+				"OnboardingClean select(mapColumn(",
+				"          user_id,",
 				"          first_login_dt,",
 				"          activacion,",
 				"          activacion_dt,",
@@ -157,8 +195,8 @@
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> SelectActivacion",
-				"sfda select(mapColumn(",
-				"          user_id = {DeleteDuplicates2@user_id},",
+				"OnboardingClean select(mapColumn(",
+				"          user_id,",
 				"          first_login_dt,",
 				"          setup,",
 				"          setup_dt,",
@@ -171,6 +209,22 @@
 				"SelectReturn filter(between(return_dt, first_login_dt, onboarding_ending)) ~> FilterReturn",
 				"UsersClean select(skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> Select",
+				"FilterSetup aggregate(setup = countIf(setup == \"1\")) ~> CountSetup",
+				"FilterActivacion aggregate(activacion = countIf(activacion == \"1\")) ~> CountActivacion",
+				"FilterReturn aggregate(drop = countIf(return == \"0\")) ~> CountDrop",
+				"CountSetup derive(key = 1) ~> AddKey1",
+				"CountActivacion derive(key = 1) ~> AddKey2",
+				"CountDrop derive(key = 1) ~> AddKey3",
+				"AddKey1, AddKey2 join(AddKey1@key == AddKey2@key,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join1",
+				"join1, AddKey3 join(AddKey1@key == AddKey3@key,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join2",
 				"CountUsers sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     format: 'table',",
@@ -187,9 +241,9 @@
 				"     saveOrder: 0,",
 				"     errorHandlingOption: 'stopOnFirstError',",
 				"     mapColumn(",
-				"          count = users",
+				"          count",
 				"     )) ~> UserCount",
-				"Aggregation sink(allowSchemaDrift: true,",
+				"join2 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     format: 'table',",
 				"     store: 'sqlserver',",
@@ -206,7 +260,6 @@
 				"     mapColumn(",
 				"          dropCount = drop,",
 				"          activacionCount = activacion,",
-				"          habitoCount = habito,",
 				"          setupCount = setup",
 				"     )) ~> Rates",
 				"Count sink(allowSchemaDrift: true,",
