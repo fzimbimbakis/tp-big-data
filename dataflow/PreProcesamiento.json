@@ -1,5 +1,5 @@
 {
-	"name": "preprocesamiento",
+	"name": "PreProcesamiento",
 	"properties": {
 		"type": "MappingDataFlow",
 		"typeProperties": {

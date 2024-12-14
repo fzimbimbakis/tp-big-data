@@ -1,36 +1,21 @@
 {
-	"name": "fintech",
+	"name": "PostProcesamiento",
 	"properties": {
 		"type": "MappingDataFlow",
 		"typeProperties": {
 			"sources": [
 				{
-					"linkedService": {
-						"referenceName": "AzureSqlDatabase1",
-						"type": "LinkedServiceReference"
-					},
-					"name": "sadfk"
-				},
-				{
 					"dataset": {
-						"referenceName": "OnboardingClean",
+						"referenceName": "UsersClean",
 						"type": "DatasetReference"
 					},
+					"name": "UsersClean"
+				},
+				{
 					"name": "sfda"
 				},
 				{
-					"dataset": {
-						"referenceName": "TransactionsClean",
-						"type": "DatasetReference"
-					},
 					"name": "afsd"
-				},
-				{
-					"linkedService": {
-						"referenceName": "AzureSqlDatabase1",
-						"type": "LinkedServiceReference"
-					},
-					"name": "myinput"
 				}
 			],
 			"sinks": [
@@ -107,41 +92,29 @@
 				},
 				{
 					"name": "Select"
-				},
-				{
-					"name": "select1"
 				}
 			],
 			"scriptLines": [
-				"source(allowSchemaDrift: true,",
+				"source(output(",
+				"          user_id as string,",
+				"          rubro as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     inferDriftedColumnTypes: true,",
 				"     limit: 100,",
-				"     format: 'table',",
-				"     store: 'sqlserver',",
-				"     schemaName: 'bigdata',",
-				"     tableName: 'users_clean',",
-				"     isolationLevel: 'READ_UNCOMMITTED') ~> sadfk",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> UsersClean",
 				"source(output(",
 				"          users as string",
 				"     ),",
 				"     allowSchemaDrift: false,",
-				"     validateSchema: false,",
-				"     ignoreNoFilesFound: false) ~> sfda",
+				"     validateSchema: false) ~> sfda",
 				"source(output(",
 				"          users as string",
 				"     ),",
 				"     allowSchemaDrift: true,",
-				"     validateSchema: false,",
-				"     ignoreNoFilesFound: false) ~> afsd",
-				"source(allowSchemaDrift: true,",
-				"     validateSchema: false,",
-				"     limit: 100,",
-				"     format: 'table',",
-				"     store: 'sqlserver',",
-				"     schemaName: 'bigdata',",
-				"     tableName: 'users_clean',",
-				"     isolationLevel: 'READ_UNCOMMITTED') ~> myinput",
+				"     validateSchema: false) ~> afsd",
 				"SelectHabito filter(between(habito_dt, first_login_dt, onboarding_ending)) ~> OnboardingDates",
 				"Select aggregate(users = ERROR_FUNCTION('')) ~> CountUsers",
 				"OnboardingDates aggregate(drop = countIf(return == \"0\"),",
@@ -158,7 +131,7 @@
 				"union1 filter(transaction_count >= 5) ~> TCount5",
 				"TCount5 aggregate(count = count(user_id)) ~> Count",
 				"sfda select(mapColumn(",
-				"          user_id = DeleteDuplicates2@user_id,",
+				"          user_id = {DeleteDuplicates2@user_id},",
 				"          first_login_dt,",
 				"          habito,",
 				"          habito_dt,",
@@ -167,7 +140,7 @@
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> SelectHabito",
 				"sfda select(mapColumn(",
-				"          user_id = DeleteDuplicates2@user_id,",
+				"          user_id = {DeleteDuplicates2@user_id},",
 				"          first_login_dt,",
 				"          return,",
 				"          return_dt,",
@@ -176,7 +149,7 @@
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> SelectReturn",
 				"sfda select(mapColumn(",
-				"          user_id = DeleteDuplicates2@user_id,",
+				"          user_id = {DeleteDuplicates2@user_id},",
 				"          first_login_dt,",
 				"          activacion,",
 				"          activacion_dt,",
@@ -185,7 +158,7 @@
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> SelectActivacion",
 				"sfda select(mapColumn(",
-				"          user_id = DeleteDuplicates2@user_id,",
+				"          user_id = {DeleteDuplicates2@user_id},",
 				"          first_login_dt,",
 				"          setup,",
 				"          setup_dt,",
@@ -196,10 +169,8 @@
 				"SelectSetup filter(between(setup_dt, first_login_dt, onboarding_ending)) ~> FilterSetup",
 				"SelectActivacion filter(between(activacion_dt, first_login_dt, onboarding_ending)) ~> FilterActivacion",
 				"SelectReturn filter(between(return_dt, first_login_dt, onboarding_ending)) ~> FilterReturn",
-				"sadfk select(skipDuplicateMapInputs: true,",
+				"UsersClean select(skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> Select",
-				"myinput select(skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> select1",
 				"CountUsers sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     format: 'table',",

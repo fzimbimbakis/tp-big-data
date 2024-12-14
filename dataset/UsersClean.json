@@ -1,0 +1,25 @@
+{
+	"name": "UsersClean",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureSqlDatabase1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "user_id",
+				"type": "nvarchar"
+			},
+			{
+				"name": "rubro",
+				"type": "nvarchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "bigdata",
+			"table": "users_clean"
+		}
+	}
+}

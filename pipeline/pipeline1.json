@@ -16,7 +16,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataflow": {
-						"referenceName": "preprocesamiento",
+						"referenceName": "PreProcesamiento",
 						"type": "DataFlowReference"
 					},
 					"compute": {
