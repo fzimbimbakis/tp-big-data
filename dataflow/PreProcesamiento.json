@@ -75,7 +75,7 @@
 					"name": "BrazilFilter3"
 				},
 				{
-					"name": "TransactionFilter"
+					"name": "BetweenDates"
 				},
 				{
 					"name": "DeleteDuplicates2"
@@ -85,6 +85,9 @@
 				},
 				{
 					"name": "DeleteDuplicates"
+				},
+				{
+					"name": "CheckRole"
 				}
 			],
 			"scriptLines": [
@@ -97,7 +100,7 @@
 				"          birth_dt as string,",
 				"          phone as string,",
 				"          type as string,",
-				"          rubro as string",
+				"          rubro as integer",
 				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
@@ -177,18 +180,20 @@
 				"     matchType:'exact',",
 				"     ignoreSpaces: false,",
 				"     broadcast: 'auto')~> BrazilFilter3",
-				"ParseDates2 filter(between(transaction_dt, first_login_dt, onboarding_ending) && ((segment == 1 && type >= 1 && type <= 7) || (segment == 2 && type >= 8 && type <= 9))) ~> TransactionFilter",
+				"ParseDates2 filter(between(transaction_dt, first_login_dt, onboarding_ending)) ~> BetweenDates",
 				"OnboardingInfo aggregate(groupBy(user_id),",
 				"     each(match(name!='user_id'), $$ = first($$))) ~> DeleteDuplicates2",
 				"ParseDates select(mapColumn(",
 				"          user_id = DeleteDuplicates2@user_id,",
 				"          first_login_dt,",
+				"          rubro,",
 				"          onboarding_ending",
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> OnboardEnding",
 				"UsersInfo aggregate(groupBy(user_id),",
 				"     each(match(name!='user_id'), $$ = first($$))) ~> DeleteDuplicates",
+				"BetweenDates filter((segment == 1 && type >= 1 && type <= 7 && isNull(rubro)) || (segment == 2 && type >= 8 && type <= 9 && !isNull(rubro))) ~> CheckRole",
 				"BrazilFilter sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     format: 'table',",
@@ -204,8 +209,7 @@
 				"     skipDuplicateMapOutputs: true,",
 				"     errorHandlingOption: 'stopOnFirstError',",
 				"     mapColumn(",
-				"          user_id,",
-				"          rubro",
+				"          user_id",
 				"     )) ~> UsersClean",
 				"ParseDates sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
@@ -234,7 +238,7 @@
 				"          return_dt,",
 				"          onboarding_ending",
 				"     )) ~> OnboardingClean",
-				"TransactionFilter sink(allowSchemaDrift: true,",
+				"CheckRole sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     format: 'table',",
 				"     store: 'sqlserver',",
@@ -251,10 +255,7 @@
 				"     mapColumn(",
 				"          user_id = TransactionsInfo@user_id,",
 				"          transaction_dt,",
-				"          type,",
-				"          segment,",
-				"          first_login_dt,",
-				"          onboarding_ending",
+				"          segment",
 				"     )) ~> TransactionsClean"
 			]
 		}
