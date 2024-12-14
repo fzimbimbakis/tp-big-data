@@ -71,9 +71,6 @@
 					"name": "FilterActivacion"
 				},
 				{
-					"name": "FilterReturn"
-				},
-				{
 					"name": "Select"
 				},
 				{
@@ -138,7 +135,6 @@
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     inferDriftedColumnTypes: true,",
-				"     limit: 100,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
 				"     format: 'table') ~> UsersClean",
 				"source(output(",
@@ -156,7 +152,6 @@
 				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     limit: 100,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
 				"     format: 'table') ~> OnboardingClean",
 				"source(output(",
@@ -166,7 +161,6 @@
 				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     limit: 100,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
 				"     format: 'table') ~> TransactionsClean",
 				"SelectHabito filter(between(habito_dt, first_login_dt, onboarding_ending)) ~> FilterHabito",
@@ -211,12 +205,11 @@
 				"     skipDuplicateMapOutputs: true) ~> SelectSetup",
 				"SelectSetup filter(between(setup_dt, first_login_dt, onboarding_ending)) ~> FilterSetup",
 				"SelectActivacion filter(between(activacion_dt, first_login_dt, onboarding_ending)) ~> FilterActivacion",
-				"SelectReturn filter(between(return_dt, first_login_dt, onboarding_ending)) ~> FilterReturn",
 				"UsersClean select(skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> Select",
 				"FilterSetup aggregate(setup = countIf(setup == 1)) ~> CountSetup",
 				"FilterActivacion aggregate(activacion = countIf(activacion == 1)) ~> CountActivacion",
-				"FilterReturn aggregate(drop = countIf(return == 0)) ~> CountDrop",
+				"SelectReturn aggregate(drop = countIf(return == 0)) ~> CountDrop",
 				"CountSetup derive(key = 1) ~> AddKey1",
 				"CountActivacion derive(key = 1) ~> AddKey2",
 				"CountDrop derive(key = 1) ~> AddKey3",
@@ -243,7 +236,7 @@
 				"     t_count = count(transaction_dt)) ~> TCount",
 				"TCountDistinct, TCount union(byName: true)~> union1",
 				"FilterHabito, CalcHabito join(SelectHabito@user_id == union1@user_id,",
-				"     joinType:'outer',",
+				"     joinType:'inner',",
 				"     matchType:'exact',",
 				"     ignoreSpaces: false,",
 				"     broadcast: 'auto')~> join4",

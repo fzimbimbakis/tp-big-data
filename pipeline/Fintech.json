@@ -1,5 +1,5 @@
 {
-	"name": "pipeline1",
+	"name": "Fintech",
 	"properties": {
 		"activities": [
 			{
@@ -17,6 +17,37 @@
 				"typeProperties": {
 					"dataflow": {
 						"referenceName": "PreProcesamiento",
+						"type": "DataFlowReference"
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "Post",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [
+					{
+						"activity": "Pre",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "PostProcesamiento",
 						"type": "DataFlowReference"
 					},
 					"compute": {

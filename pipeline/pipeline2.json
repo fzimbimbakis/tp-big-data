@@ -3,7 +3,7 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Data flow2",
+				"name": "Post",
 				"type": "ExecuteDataFlow",
 				"dependsOn": [],
 				"policy": {
@@ -16,7 +16,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataflow": {
-						"referenceName": "fintech_santi",
+						"referenceName": "PostProcesamiento",
 						"type": "DataFlowReference"
 					},
 					"compute": {
