@@ -18,7 +18,8 @@
 			},
 			{
 				"name": "habito",
-				"type": "nvarchar"
+				"type": "int",
+				"precision": 10
 			},
 			{
 				"name": "habito_dt",
@@ -26,7 +27,8 @@
 			},
 			{
 				"name": "activacion",
-				"type": "nvarchar"
+				"type": "int",
+				"precision": 10
 			},
 			{
 				"name": "activacion_dt",
@@ -34,7 +36,8 @@
 			},
 			{
 				"name": "setup",
-				"type": "nvarchar"
+				"type": "int",
+				"precision": 10
 			},
 			{
 				"name": "setup_dt",
@@ -42,7 +45,8 @@
 			},
 			{
 				"name": "return",
-				"type": "nvarchar"
+				"type": "int",
+				"precision": 10
 			},
 			{
 				"name": "return_dt",

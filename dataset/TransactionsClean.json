@@ -17,20 +17,9 @@
 				"type": "date"
 			},
 			{
-				"name": "type",
-				"type": "nvarchar"
-			},
-			{
 				"name": "segment",
-				"type": "nvarchar"
-			},
-			{
-				"name": "first_login_dt",
-				"type": "date"
-			},
-			{
-				"name": "onboarding_ending",
-				"type": "date"
+				"type": "int",
+				"precision": 10
 			}
 		],
 		"typeProperties": {
