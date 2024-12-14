@@ -1,0 +1,96 @@
+{
+	"name": "Transformation",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "UsersClean",
+						"type": "DatasetReference"
+					},
+					"name": "Users"
+				},
+				{
+					"dataset": {
+						"referenceName": "TransactionsClean",
+						"type": "DatasetReference"
+					},
+					"name": "Transactions"
+				},
+				{
+					"dataset": {
+						"referenceName": "OnboardingClean",
+						"type": "DatasetReference"
+					},
+					"name": "Onboarding"
+				}
+			],
+			"sinks": [
+				{
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "UserOnboarding"
+				},
+				{
+					"name": "UserOnboardingTransactions"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          user_id as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     inferDriftedColumnTypes: true,",
+				"     ignoreNoFilesFound: false) ~> Users",
+				"source(output(",
+				"          user_id as string,",
+				"          transaction_dt as string,",
+				"          type as string,",
+				"          segment as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> Transactions",
+				"source(output(",
+				"          first_login_dt as string,",
+				"          week_year as string,",
+				"          user_id as string,",
+				"          habito as string,",
+				"          habito_dt as string,",
+				"          activacion as string,",
+				"          activacion_dt as string,",
+				"          setup as string,",
+				"          setup_dt as string,",
+				"          return as string,",
+				"          return_dt as string,",
+				"          days_to_habito as string,",
+				"          days_to_activacion as string,",
+				"          days_to_setup as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     inferDriftedColumnTypes: true,",
+				"     ignoreNoFilesFound: false) ~> Onboarding",
+				"Users, Onboarding join(Users@user_id == Onboarding@user_id,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> UserOnboarding",
+				"UserOnboarding, Transactions join(Users@user_id == Transactions@user_id,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> UserOnboardingTransactions",
+				"UserOnboardingTransactions sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> sink1"
+			]
+		}
+	}
+}

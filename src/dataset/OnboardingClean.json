@@ -10,6 +10,7 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobStorageLocation",
+				"fileName": "lk_onboarding_clean.csv",
 				"container": "output"
 			},
 			"columnDelimiter": ",",
@@ -19,11 +20,59 @@
 		},
 		"schema": [
 			{
-				"name": "return",
+				"name": "first_login_dt",
+				"type": "String"
+			},
+			{
+				"name": "week_year",
 				"type": "String"
 			},
 			{
 				"name": "user_id",
+				"type": "String"
+			},
+			{
+				"name": "habito",
+				"type": "String"
+			},
+			{
+				"name": "habito_dt",
+				"type": "String"
+			},
+			{
+				"name": "activacion",
+				"type": "String"
+			},
+			{
+				"name": "activacion_dt",
+				"type": "String"
+			},
+			{
+				"name": "setup",
+				"type": "String"
+			},
+			{
+				"name": "setup_dt",
+				"type": "String"
+			},
+			{
+				"name": "return",
+				"type": "String"
+			},
+			{
+				"name": "return_dt",
+				"type": "String"
+			},
+			{
+				"name": "days_to_habito",
+				"type": "String"
+			},
+			{
+				"name": "days_to_activacion",
+				"type": "String"
+			},
+			{
+				"name": "days_to_setup",
 				"type": "String"
 			}
 		]

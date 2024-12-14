@@ -18,6 +18,13 @@
 						"type": "DatasetReference"
 					},
 					"name": "Onboarding"
+				},
+				{
+					"dataset": {
+						"referenceName": "UsersInput",
+						"type": "DatasetReference"
+					},
+					"name": "Users"
 				}
 			],
 			"sinks": [
@@ -27,6 +34,20 @@
 						"type": "DatasetReference"
 					},
 					"name": "TransactionsClean"
+				},
+				{
+					"dataset": {
+						"referenceName": "OnboardingClean",
+						"type": "DatasetReference"
+					},
+					"name": "OnboardingClean"
+				},
+				{
+					"dataset": {
+						"referenceName": "UsersClean",
+						"type": "DatasetReference"
+					},
+					"name": "UsersClean"
 				}
 			],
 			"transformations": [
@@ -43,6 +64,27 @@
 				{
 					"name": "MapSegment",
 					"description": "Rewrite segment column to Individual or Seller"
+				},
+				{
+					"name": "RelevantColsOnboarding"
+				},
+				{
+					"name": "NonNullOnboarding"
+				},
+				{
+					"name": "MetricsValidation"
+				},
+				{
+					"name": "CalculateDaysFromLogin"
+				},
+				{
+					"name": "DaysToValidation"
+				},
+				{
+					"name": "BrazilUsers"
+				},
+				{
+					"name": "RelevantUsers"
 				}
 			],
 			"scriptLines": [
@@ -74,6 +116,20 @@
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false) ~> Onboarding",
+				"source(output(",
+				"          Prop_0 as string,",
+				"          user_id as string,",
+				"          name as string,",
+				"          email as string,",
+				"          address as string,",
+				"          birth_dt as string,",
+				"          phone as string,",
+				"          type as string,",
+				"          rubro as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> Users",
 				"Transactions select(mapColumn(",
 				"          user_id,",
 				"          transaction_dt,",
@@ -85,10 +141,41 @@
 				"RelevantCols filter(!isNull(user_id)) ~> NonNullUsers",
 				"NonNullUsers filter((segment == 1 && type >= 1 && type <= 7) || (segment == 2 && (type == 8 || type == 9))) ~> SegmentValidation",
 				"SegmentValidation derive(segment = iif(segment == 1, 'Individual', 'Seller')) ~> MapSegment",
+				"Onboarding select(mapColumn(",
+				"          first_login_dt,",
+				"          week_year,",
+				"          user_id,",
+				"          habito,",
+				"          habito_dt,",
+				"          activacion,",
+				"          activacion_dt,",
+				"          setup,",
+				"          setup_dt,",
+				"          return,",
+				"          return_dt",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> RelevantColsOnboarding",
+				"RelevantColsOnboarding filter(!isNull(user_id) && !isNull(first_login_dt)) ~> NonNullOnboarding",
+				"NonNullOnboarding filter((habito == 0 || habito == 1) ||",
+				"(activacion == 0 || activacion == 1) ||",
+				"(setup == 0 || setup == 1) ||",
+				"((return == 0 && isNull(return_dt)) || (return == 1 && !isNull(return_dt)))) ~> MetricsValidation",
+				"MetricsValidation derive(days_to_habito = minus(habito_dt, first_login_dt),",
+				"          days_to_activacion = minus(activacion_dt, first_login_dt),",
+				"          days_to_setup = minus(setup_dt, first_login_dt)) ~> CalculateDaysFromLogin",
+				"CalculateDaysFromLogin filter((isNull(days_to_habito) || days_to_habito >= 0) && ",
+				"(isNull(days_to_activacion) || days_to_activacion >= 0) && ",
+				"(isNull(days_to_setup) || days_to_setup >= 0)) ~> DaysToValidation",
+				"Users filter(startsWith(user_id, 'MLB')) ~> BrazilUsers",
+				"BrazilUsers select(mapColumn(",
+				"          user_id",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> RelevantUsers",
 				"MapSegment sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
-				"          Prop_0 as string,",
 				"          user_id as string,",
 				"          transaction_dt as string,",
 				"          type as string,",
@@ -97,7 +184,38 @@
 				"     partitionFileNames:['bt_users_transactions_clean.csv'],",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
-				"     partitionBy('hash', 1)) ~> TransactionsClean"
+				"     partitionBy('hash', 1)) ~> TransactionsClean",
+				"DaysToValidation sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          first_login_dt as string,",
+				"          week_year as string,",
+				"          user_id as string,",
+				"          habito as string,",
+				"          habito_dt as string,",
+				"          activacion as string,",
+				"          activacion_dt as string,",
+				"          setup as string,",
+				"          setup_dt as string,",
+				"          return as string,",
+				"          return_dt as string,",
+				"          days_to_habito as string,",
+				"          days_to_activacion as string,",
+				"          days_to_setup as string",
+				"     ),",
+				"     partitionFileNames:['lk_onboarding_clean.csv'],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> OnboardingClean",
+				"RelevantUsers sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          user_id as string",
+				"     ),",
+				"     partitionFileNames:['lk_users_clean.csv'],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> UsersClean"
 			]
 		}
 	}

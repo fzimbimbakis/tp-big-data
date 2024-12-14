@@ -10,6 +10,7 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobStorageLocation",
+				"fileName": "lk_users_clean.csv",
 				"container": "output"
 			},
 			"columnDelimiter": ",",
@@ -19,23 +20,7 @@
 		},
 		"schema": [
 			{
-				"name": "Prop_0",
-				"type": "String"
-			},
-			{
 				"name": "user_id",
-				"type": "String"
-			},
-			{
-				"name": "transaction_dt",
-				"type": "String"
-			},
-			{
-				"name": "type",
-				"type": "String"
-			},
-			{
-				"name": "segment",
 				"type": "String"
 			}
 		]

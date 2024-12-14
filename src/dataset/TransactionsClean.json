@@ -10,6 +10,7 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobStorageLocation",
+				"fileName": "bt_users_transactions_clean.csv",
 				"container": "output"
 			},
 			"columnDelimiter": ",",
@@ -18,10 +19,6 @@
 			"quoteChar": "\""
 		},
 		"schema": [
-			{
-				"name": "Prop_0",
-				"type": "String"
-			},
 			{
 				"name": "user_id",
 				"type": "String"
