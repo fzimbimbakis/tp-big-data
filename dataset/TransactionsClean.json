@@ -1,0 +1,41 @@
+{
+	"name": "TransactionsClean",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureSqlDatabase1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "user_id",
+				"type": "nvarchar"
+			},
+			{
+				"name": "transaction_dt",
+				"type": "date"
+			},
+			{
+				"name": "type",
+				"type": "nvarchar"
+			},
+			{
+				"name": "segment",
+				"type": "nvarchar"
+			},
+			{
+				"name": "first_login_dt",
+				"type": "date"
+			},
+			{
+				"name": "onboarding_ending",
+				"type": "date"
+			}
+		],
+		"typeProperties": {
+			"schema": "bigdata",
+			"table": "transactions_clean"
+		}
+	}
+}

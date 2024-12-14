@@ -19,7 +19,11 @@
 					"name": "OnboardingClean"
 				},
 				{
-					"name": "afsd"
+					"dataset": {
+						"referenceName": "TransactionsClean",
+						"type": "DatasetReference"
+					},
+					"name": "TransactionsClean"
 				}
 			],
 			"sinks": [
@@ -36,42 +40,17 @@
 						"type": "LinkedServiceReference"
 					},
 					"name": "Rates"
-				},
-				{
-					"linkedService": {
-						"referenceName": "AzureSqlDatabase1",
-						"type": "LinkedServiceReference"
-					},
-					"name": "Habito"
 				}
 			],
 			"transformations": [
 				{
-					"name": "OnboardingDates"
+					"name": "FilterHabito"
 				},
 				{
 					"name": "CountUsers"
 				},
 				{
-					"name": "Aggregation"
-				},
-				{
-					"name": "DistinctTCount"
-				},
-				{
 					"name": "split1"
-				},
-				{
-					"name": "TCount"
-				},
-				{
-					"name": "union1"
-				},
-				{
-					"name": "TCount5"
-				},
-				{
-					"name": "Count"
 				},
 				{
 					"name": "SelectHabito"
@@ -120,6 +99,36 @@
 				},
 				{
 					"name": "join2"
+				},
+				{
+					"name": "SelectTransactions"
+				},
+				{
+					"name": "TCountDistinct"
+				},
+				{
+					"name": "TCount"
+				},
+				{
+					"name": "union1"
+				},
+				{
+					"name": "join4"
+				},
+				{
+					"name": "CalcHabito"
+				},
+				{
+					"name": "MatchHabito"
+				},
+				{
+					"name": "CountHabito"
+				},
+				{
+					"name": "AddKey4"
+				},
+				{
+					"name": "join3"
 				}
 			],
 			"scriptLines": [
@@ -136,7 +145,7 @@
 				"source(output(",
 				"          user_id as string,",
 				"          first_login_dt as date,",
-				"          habito as string,",
+				"          habito as integer,",
 				"          habito_dt as date,",
 				"          activacion as string,",
 				"          activacion_dt as date,",
@@ -152,22 +161,22 @@
 				"     isolationLevel: 'READ_UNCOMMITTED',",
 				"     format: 'table') ~> OnboardingClean",
 				"source(output(",
-				"          users as string",
+				"          user_id as string,",
+				"          transaction_dt as date,",
+				"          type as string,",
+				"          segment as string,",
+				"          first_login_dt as date,",
+				"          onboarding_ending as date",
 				"     ),",
 				"     allowSchemaDrift: true,",
-				"     validateSchema: false) ~> afsd",
-				"SelectHabito filter(between(habito_dt, first_login_dt, onboarding_ending)) ~> OnboardingDates",
+				"     validateSchema: false,",
+				"     limit: 100,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> TransactionsClean",
+				"SelectHabito filter(between(habito_dt, first_login_dt, onboarding_ending)) ~> FilterHabito",
 				"Select aggregate(count = count(user_id)) ~> CountUsers",
-				"OnboardingDates aggregate(habito = countIf(habito == \"1.0\")) ~> Aggregation",
-				"split1@Individuals aggregate(groupBy(user_id = split1@Individuals@user_id),",
-				"     transaction_count = countDistinct(transaction_dt)) ~> DistinctTCount",
-				"afsd split(segment == \"1\",",
+				"SelectTransactions split(segment == \"1\",",
 				"     disjoint: false) ~> split1@(Individuals, Sellers)",
-				"split1@Sellers aggregate(groupBy(user_id = split1@Sellers@user_id),",
-				"     transaction_count = count(transaction_dt)) ~> TCount",
-				"DistinctTCount, TCount union(byName: true)~> union1",
-				"union1 filter(transaction_count >= 5) ~> TCount5",
-				"TCount5 aggregate(count = count(user_id)) ~> Count",
 				"OnboardingClean select(mapColumn(",
 				"          user_id,",
 				"          first_login_dt,",
@@ -225,6 +234,32 @@
 				"     matchType:'exact',",
 				"     ignoreSpaces: false,",
 				"     broadcast: 'auto')~> join2",
+				"TransactionsClean select(mapColumn(",
+				"          user_id,",
+				"          transaction_dt,",
+				"          segment",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> SelectTransactions",
+				"split1@Individuals aggregate(groupBy(user_id),",
+				"     t_count = countDistinct(transaction_dt)) ~> TCountDistinct",
+				"split1@Sellers aggregate(groupBy(user_id),",
+				"     t_count = count(transaction_dt)) ~> TCount",
+				"TCountDistinct, TCount union(byName: true)~> union1",
+				"FilterHabito, CalcHabito join(SelectHabito@user_id == union1@user_id,",
+				"     joinType:'outer',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join4",
+				"union1 derive(t_count_habito = iif(t_count >= 5, 1, 0)) ~> CalcHabito",
+				"join4 filter(isNull(habito) || isNull(t_count_habito) || habito == t_count_habito) ~> MatchHabito",
+				"MatchHabito aggregate(habito = countIf(habito == 1 || t_count_habito == 1)) ~> CountHabito",
+				"CountHabito derive(key = 1) ~> AddKey4",
+				"join2, AddKey4 join(AddKey1@key == AddKey4@key,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join3",
 				"CountUsers sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     format: 'table',",
@@ -243,7 +278,7 @@
 				"     mapColumn(",
 				"          count",
 				"     )) ~> UserCount",
-				"join2 sink(allowSchemaDrift: true,",
+				"join3 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     format: 'table',",
 				"     store: 'sqlserver',",
@@ -260,25 +295,9 @@
 				"     mapColumn(",
 				"          dropCount = drop,",
 				"          activacionCount = activacion,",
-				"          setupCount = setup",
-				"     )) ~> Rates",
-				"Count sink(allowSchemaDrift: true,",
-				"     validateSchema: false,",
-				"     format: 'table',",
-				"     store: 'sqlserver',",
-				"     schemaName: 'bigdata',",
-				"     tableName: 'habito',",
-				"     insertable: true,",
-				"     updateable: false,",
-				"     deletable: false,",
-				"     upsertable: false,",
-				"     recreate: true,",
-				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true,",
-				"     errorHandlingOption: 'stopOnFirstError',",
-				"     mapColumn(",
-				"          count",
-				"     )) ~> Habito"
+				"          setupCount = setup,",
+				"          habitoCount = habito",
+				"     )) ~> Rates"
 			]
 		}
 	}
